@@ -1,0 +1,6 @@
+# Dart/Flutter ignores
+.dart_tool/
+build/
+packages/
+.idea/
+pubspec.lock
