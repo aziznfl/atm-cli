@@ -1,5 +1,6 @@
 import "package:test/test.dart";
 
+import "package:atm/core/configs.dart";
 import "package:atm/entities/models/user.dart";
 import "package:atm/features/user.dart";
 import "package:atm/utils/constants.dart";
@@ -232,6 +233,8 @@ void main() {
 
         group("edge case", () {
             test("pay debt", () {
+                Config.IS_RECORD_PENDING_NOTIFICATION = true;
+
                 final controller = UserController();
                 // create user
                 controller.login("john");
@@ -258,10 +261,12 @@ void main() {
                 final result = controller.login("john");
                 final generateGreetings = "Hello, John\nReceived \$200 from Ema\nReceived \$100 from Ema\nYour balance is \$300";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
             });
 
             test("pay debt with debt", () {
+                Config.IS_RECORD_PENDING_NOTIFICATION = true;
+
                 // create user
                 final controller = UserController();
                 controller.login("john");
@@ -280,7 +285,7 @@ void main() {
                 var result = controller.login("ema");
                 var generateGreetings = "Hello, Ema\nYour balance is \$0";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
 
                 // when ema create debt to ruben
                 result = controller.transfer("100", "ruben");
@@ -292,14 +297,14 @@ void main() {
                 result = controller.login("ruben");
                 generateGreetings = "Hello, Ruben\nYour balance is \$0\nOwed \$300 to John\nOwed \$100 from Ema";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
 
                 // change user to ema
                 controller.logout();
                 result = controller.login("ema");
                 generateGreetings = "Hello, Ema\nYour balance is \$0\nOwed \$100 to Ruben";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
 
                 // deposit to pay the debt
                 result = controller.deposit("50");
@@ -311,7 +316,7 @@ void main() {
                 result = controller.login("ruben");
                 generateGreetings = "Hello, Ruben\nReceived \$50 from Ema\nTransferred \$50 to John\nYour balance is \$0\nOwed \$250 to John\nOwed \$50 from Ema";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
 
                 // deposit to pay the debt
                 result = controller.deposit("350");
@@ -323,7 +328,7 @@ void main() {
                 result = controller.login("john");
                 generateGreetings = "Hello, John\nReceived \$50 from Ruben\nReceived \$250 from Ruben\nYour balance is \$300";
                 expect(result.data, generateGreetings);
-                expect(controller.currentUser?.pendingNotification, isEmpty);
+                expect(controller.currentUser?.pendingNotifications, isEmpty);
             });
         });
     });

@@ -7,9 +7,9 @@ class User {
     final String name;
     int balance;
     List<UserTransaction> debts;
-    List<UserTransaction> pendingNotification;
+    List<UserTransaction> pendingNotifications;
 
-    User(this.name, this.balance, this.debts, this.pendingNotification);
+    User(this.name, this.balance, this.debts, this.pendingNotifications);
 
     String get showName {
         return name.toCapitalize();

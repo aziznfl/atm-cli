@@ -89,7 +89,7 @@ class UserController {
 
         // transfer
         final transferred = _useCase.transfer(user, targetUser, amount);
-        if (transferred == -1) return Result(errorMessage: "Failed transfer");
+        if (transferred == null) return Result(errorMessage: "Failed transfer");
 
         // set debtAmount
         final debtAmount = amount - transferred;
@@ -98,7 +98,14 @@ class UserController {
         var str = "";
         if (transferred > 0) str += "Transfered ${transferred.toCurrency()} to ${targetUser.showName}\n";
         str += "Your balance is ${currentUser?.showBalance}";
-        if (debtAmount > 0) str += "\nOwed ${debtAmount.toCurrency()} to ${targetUser.showName}";
+
+        if (transferred >= 0 && debtAmount > 0) str += "\nOwed ${debtAmount.toCurrency()} to ${targetUser.showName}";
+
+        // get receivables
+        final receivables = _useCase.receivables(user);
+        receivables.forEach((transaction) {
+            if (transaction.user == targetUser) str += "\nOwed ${transaction.showAmount} from ${targetUser.showName}";
+        });
 
         return Result(data: str);
     }
@@ -112,7 +119,7 @@ extension ResponseUserController on UserController {
         var str = "Hello, ${user.showName}";
 
         // print pending notifications
-        final pendingNotifications = user.pendingNotification;
+        final pendingNotifications = user.pendingNotifications;
         for (var transaction in pendingNotifications) {
             if (transaction.amount > 0) {
                 str += "\nReceived ${transaction.showAmount} from ${transaction.showName}";

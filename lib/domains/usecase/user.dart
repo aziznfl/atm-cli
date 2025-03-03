@@ -34,8 +34,27 @@ extension TransactionsUserUseCase on UserUseCase {
         return true;
     }
 
-    int transfer(User fromUser, User toUser, int amount) {
-        if (amount < 1) return -1;
+    int? transfer(User fromUser, User toUser, int amount) {
+        if (amount < 1) return null;
+
+        // get existing debt and
+        final existingDebt = toUser.debts.firstWhereOrNull((transaction) => transaction.user == fromUser);
+        if (existingDebt != null && existingDebt.amount > 0) {
+            final deduct = min(amount, existingDebt.amount);
+            final leftOver = amount - deduct;
+
+            final debtFinal = existingDebt.amount - deduct;
+            if (debtFinal == 0) {
+                // remove if final amount is zero
+                toUser.debts.remove(existingDebt);
+            } else {
+                // reduce the existing debt
+                existingDebt.amount = debtFinal;
+            }
+
+            if (leftOver > 0) return transfer(fromUser, toUser, leftOver);
+            else return -debtFinal;
+        }
 
         var transferred = 0;
         if (fromUser.balance == 0) {
@@ -43,7 +62,7 @@ extension TransactionsUserUseCase on UserUseCase {
             _addDebt(fromUser, toUser, amount);
         } else if (fromUser.balance < amount) {
             // create transfer notification
-            _addPendingNotification(toUser, fromUser, fromUser.balance);
+            _addPendingNotifications(toUser, fromUser, fromUser.balance);
 
             // set transfer amount;
             transferred = fromUser.balance;
@@ -53,7 +72,7 @@ extension TransactionsUserUseCase on UserUseCase {
             _addDebt(fromUser, toUser, debtPaidAmount);
         } else {
             // create transfer notification
-            _addPendingNotification(toUser, fromUser, amount);
+            _addPendingNotifications(toUser, fromUser, amount);
 
             // set transfer amount;
             transferred = amount;
@@ -116,7 +135,7 @@ extension TransactionsUserUseCase on UserUseCase {
             transfer(user, lenderDebt.user, payAmount);
 
             // create recieve notification
-            _addPendingNotification(user, lenderDebt.user, -payAmount);
+            _addPendingNotifications(user, lenderDebt.user, -payAmount);
 
             // pay target user debt
             if (_isUserCanPaidDebt(lenderDebt.user)) _payDebts(lenderDebt.user);
@@ -132,11 +151,9 @@ extension TransactionsUserUseCase on UserUseCase {
         return payments;
     }
 
-    void _addPendingNotification(User fromUser, User toUser, int amount) {
+    void _addPendingNotifications(User fromUser, User toUser, int amount) {
         if (!Config.IS_RECORD_PENDING_NOTIFICATION) return;
 
-        // print("${toUser.name} to ${fromUser.name}: $amount");
-        fromUser.pendingNotification.add(UserTransaction(toUser, amount));
-        // print("${fromUser.name} pending len: ${fromUser.pendingNotification.length}");
+        fromUser.pendingNotifications.add(UserTransaction(toUser, amount));
     }
 }
