@@ -99,9 +99,12 @@ class UserController {
         if (transferred > 0) str += "Transfered ${transferred.toCurrency()} to ${targetUser.showName}\n";
         str += "Your balance is ${currentUser?.showBalance}";
 
-        if (transferred >= 0 && debtAmount > 0) str += "\nOwed ${debtAmount.toCurrency()} to ${targetUser.showName}";
+        // set debts log
+        user.debts.forEach((transaction) {
+            if (transaction.user == targetUser) str += "\nOwed ${transaction.showAmount} to ${targetUser.showName}";
+        });
 
-        // get receivables
+        // set receivables log
         final receivables = _useCase.receivables(user);
         receivables.forEach((transaction) {
             if (transaction.user == targetUser) str += "\nOwed ${transaction.showAmount} from ${targetUser.showName}";
